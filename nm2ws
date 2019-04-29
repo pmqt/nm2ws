@@ -1,0 +1,79 @@
+#!/usr/bin/env python3
+"""
+Convert NetworkManager connection files to wpa_supplicant network blocks.
+
+NetworkManager stores connection configuration in INI-like files, by default in
+the directory /etc/NetworkManager/system-connections/, while wpa_supplicant
+stores similar information in network blocks in its configuration
+file, commonly /etc/wpa_supplicant.conf
+"""
+
+import sys
+import argparse
+import configparser
+
+
+def nm_to_ws(filename):
+    """
+    Read NetworkManager connection file and return wpa_supplicant network block
+    """
+
+    # Read INI-like NetworkManager connection configuration from file
+
+    config = configparser.ConfigParser(interpolation=None)
+    config.read_file(open(filename))
+
+    # Copy select keys into wpa_supplicant format
+
+    network = {}
+
+    if '802-11-wireless' in config and 'ssid' in config['802-11-wireless']:
+        network['ssid'] = '"' + config['802-11-wireless']['ssid'] + '"'
+    else:
+        raise Exception(filename + ': no ssid')
+
+    if '802-11-wireless-security' in config:
+        key_mgmt = config['802-11-wireless-security'].get('key-mgmt')
+        if key_mgmt == 'wpa-psk':
+            network['key_mgmt'] = 'WPA-PSK'
+            if 'psk' in config['802-11-wireless-security']:
+                network['psk'] = config['802-11-wireless-security']['psk']
+                network['psk'] = '"' + network['psk'] + '"'
+            else:
+                raise Exception(filename + ': no password')
+        elif key_mgmt == 'wpa-eap':
+            raise Exception(filename + ': no eap support')
+        else:
+            raise Exception(filename + ': unknown key management')
+    else:
+        network['key_mgmt'] = 'NONE'
+
+    # Combine keys into wpa_supplicant network block
+
+    network_block = 'network={\n'
+    for key, value in network.items():
+        network_block += '  ' + str(key) + '=' + str(value) + '\n'
+    network_block += '}'
+
+    return network_block
+
+
+def main():
+    """
+    For each NetworkManager connection filename given as a command line
+    argument, print the corresponding wpa_supplicant network block. Incomplete
+    network blocks are not printed and a message is printed to stderr instead.
+    """
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument('connections', nargs='+')
+    args = parser.parse_args()
+
+    for connection in vars(args)['connections']:
+        try:
+            print(nm_to_ws(connection))
+        except Exception as exc:
+            print(exc.args[0], file=sys.stderr)
+
+if __name__ == '__main__':
+    main()
