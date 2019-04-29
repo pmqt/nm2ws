@@ -17,4 +17,6 @@ configuration file, commonly `/etc/wpa_supplicant.conf`.
 Assuming these default locations, `NetworkManager` configurations can be 
 imported to `wpa_supplicant` with:
 
-`nm2ws /etc/NetworkManager/system-connections/* >> /etc/wpa_supplicant.conf`
+```
+nm2ws /etc/NetworkManager/system-connections/* >> /etc/wpa_supplicant.conf
+```
