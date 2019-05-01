@@ -7,6 +7,14 @@ This utility imports saved network credentials from `NetworkManager` to
 `NetworkManager` and configure `wpa_supplicant` directly with `wpa_cli`, or to 
 copy credentials from a laptop to a raspberry pi.
 
+## Install
+
+```
+git clone https://github.com/pmqt/nm2ws
+cd nm2ws
+sudo make install
+```
+
 ## Usage
 
 `NetworkManager` stores connection configuration in INI-like files, by default 
